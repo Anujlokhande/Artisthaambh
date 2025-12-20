@@ -4,10 +4,12 @@ import { ListingDataContext } from "../context/ListingContext";
 import { UserDataContext } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ArtistDataContext } from "../context/AristContext";
 
 const ArtListing = () => {
   const { listingDetails, setListingDetails } = useContext(ListingDataContext);
   const { user, setUser } = useContext(UserDataContext);
+  const { artist, setArtist } = useContext(ArtistDataContext);
   const [authorized, setAuthorized] = useState(false);
   const [comment, setComment] = useState("");
   const [saved, setSaved] = useState(false);
@@ -17,6 +19,12 @@ const ArtListing = () => {
   useEffect(() => {
     async function checkOwner() {
       const token = localStorage.getItem("token");
+
+      if (!token || !artist) {
+        setAuthorized(false);
+        return;
+      }
+
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/artist/artOwner/${
@@ -26,11 +34,18 @@ const ArtListing = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setAuthorized(response.status === 200);
+
+        setAuthorized(response.data.authorized);
       } catch (err) {
-        console.error(err);
+        if (err.response?.status === 403) {
+          setAuthorized(false);
+          return;
+        } else {
+          console.error(err); // real errors
+        }
       }
     }
+
     async function checkSaved() {
       const token = localStorage.getItem("token");
       try {
@@ -49,7 +64,9 @@ const ArtListing = () => {
     }
     if (listingDetails?._id) {
       checkOwner();
-      checkSaved();
+      if (user) {
+        checkSaved();
+      }
     }
   }, [listingDetails]);
 
@@ -219,22 +236,24 @@ const ArtListing = () => {
               </div>
             </div>
 
-            <div className="mt-8">
-              <form className="mb-4" onSubmit={submitHandler}>
-                <div className="flex justify-center items-center">
-                  <input
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    type="text"
-                    className="w-full border border-r-0 border-black rounded-l-2xl px-5 py-3 outline-0 placeholder:px-3"
-                    placeholder="Add Comment"
-                  />
-                  <button className="px-5 py-2 border border-l-0 rounded-r-2xl">
-                    <i className="ri-arrow-right-line text-2xl"></i>
-                  </button>
-                </div>
-              </form>
-            </div>
+            {user && (
+              <div className="mt-8">
+                <form className="mb-4" onSubmit={submitHandler}>
+                  <div className="flex justify-center items-center">
+                    <input
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      type="text"
+                      className="w-full border border-r-0 border-black rounded-l-2xl px-5 py-3 outline-0 placeholder:px-3"
+                      placeholder="Add Comment"
+                    />
+                    <button className="px-5 py-2 border border-l-0 rounded-r-2xl">
+                      <i className="ri-arrow-right-line text-2xl"></i>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -3,6 +3,10 @@ const Listing = require("../models/listing.model");
 const listingService = require("../services/listing.services");
 const { validationResult } = require("express-validator");
 const artistServices = require("../services/artist.services");
+const cloudinary = require("../config/cloudinary.js");
+const listingModel = require("../models/listing.model");
+const jwt = require("jsonwebtoken");
+const axios = require("axios");
 
 module.exports.registerArtist = async (req, res, next) => {
   const error = validationResult(req);
@@ -204,5 +208,123 @@ module.exports.showListing = async (req, res, next) => {
   } catch (err) {
     console.log(err);
     next(err);
+  }
+};
+
+module.exports.LoggedIn = async (req, res) => {
+  try {
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(400).json({ message: "Token Is Not Present" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const artist = await artistModel.findById(decoded._id).populate("arts");
+    if (artist) {
+      return res.status(200).json({ role: "artist", artist });
+    }
+
+    const user = await userModel.findById(decoded._id).populate("saved");
+    if (user) {
+      return res.status(200).json({ role: "user", user });
+    }
+
+    return res.status(404).json({ message: "User or Artist not found" });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({ message: "err" });
+  }
+};
+
+//file upload
+
+module.exports.uploadImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file" });
+    }
+
+    const uploadFromBuffer = (buffer) =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "my_uploads" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(buffer);
+      });
+
+    const uploaded = await uploadFromBuffer(req.file.buffer);
+
+    res.status(200).json({
+      url: uploaded.secure_url,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
+//map
+
+module.exports.map = async (req, res) => {
+  try {
+    const listing = await listingModel.findById(req.params.id);
+    if (!listing) {
+      return res.status(404).json({ message: "Listing not found" });
+    }
+
+    // Combine location + country
+    const locationQuery = `${listing.location}${
+      listing.country ? ", " + listing.country : ""
+    }`;
+
+    const apiKey = process.env.GEOAPIFY_API_KEY;
+
+    // GEOAPIFY GEOCODING
+    const geocodeUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
+      locationQuery
+    )}&apiKey=${apiKey}`;
+
+    const geocodeResponse = await axios.get(geocodeUrl);
+
+    if (
+      !geocodeResponse.data.features ||
+      geocodeResponse.data.features.length === 0
+    ) {
+      return res.status(400).json({
+        message: "Unable to fetch geocode data",
+      });
+    }
+
+    const { lat, lon } = geocodeResponse.data.features[0].properties;
+
+    // radius in meters
+    const radius = 1000;
+
+    // Geoapify static map with circle
+    const staticMapUrl = `https://maps.geoapify.com/v1/staticmap
+?style=osm-carto
+&width=600
+&height=300
+&center=lonlat:${lon},${lat}
+&zoom=14
+&circle=lonlat:${lon},${lat};radius:${radius};fillcolor:%230066ff33;strokecolor:%230066ff
+&marker=lonlat:${lon},${lat};color:%23ff0000
+&apiKey=${apiKey}`;
+
+    res.status(200).json({
+      mapUrl: staticMapUrl,
+      lat,
+      lon,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
   }
 };

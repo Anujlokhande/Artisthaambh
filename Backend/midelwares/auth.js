@@ -77,7 +77,7 @@ module.exports.artOwner = async (req, res) => {
     const { id } = req.params;
 
     if (!id) {
-      return res.status(400).json({ message: "Id is not Provided" });
+      return res.status(400).json({ message: "Id not provided" });
     }
 
     const listing = await ListingModel.findById(id);
@@ -86,14 +86,10 @@ module.exports.artOwner = async (req, res) => {
       return res.status(404).json({ message: "Listing not found" });
     }
 
-    if (!req.artist) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+    const isOwner = listing.owner.toString() === req.artist._id.toString();
 
-    if (listing.owner.toString() === req.artist._id.toString()) {
-      return res.status(200).json({ message: "Owner Found" });
-    }
-    return res.status(403).json({ message: "Not authorized" });
+    // Always 200, frontend decides UI
+    return res.status(200).json({ authorized: isOwner });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });

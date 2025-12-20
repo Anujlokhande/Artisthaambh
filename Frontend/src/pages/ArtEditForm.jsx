@@ -1,13 +1,15 @@
-import React, { useState } from "react";
-import { useContext } from "react";
-import { ListingDataContext } from "../context/ListingContext";
+import React, { useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { ListingDataContext } from "../context/ListingContext";
 
-const ArtEditForm = ({ initialArt = {}, onSubmit }) => {
+const ArtEditForm = () => {
   const { listingDetails, setListingDetails } = useContext(ListingDataContext);
+
   const navigate = useNavigate();
-  //   console.log(listingDetails._id);
+
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const artTypes = [
     "Chittara art",
@@ -20,39 +22,71 @@ const ArtEditForm = ({ initialArt = {}, onSubmit }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setListingDetails((prevListingDetails) => ({
-      ...prevListingDetails,
+    setListingDetails((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
 
+  const handleImageAsFile = async (e) => {
+    e.preventDefault();
+    if (!file) return;
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file); // must match backend
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/artist/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (res.data?.url) {
+        setListingDetails((prev) => ({
+          ...prev,
+          image: res.data.url,
+        }));
+      } else {
+        alert("Image upload failed");
+      }
+    } catch (err) {
+      console.error("Upload Error:", err);
+      alert("Image upload failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const requiredFields = ["title", "description", "typeOfArt"];
+
+    const requiredFields = ["title", "description", "typeOfArt", "image"];
     const missingFields = requiredFields.filter(
-      (field) => !listingDetails[field]
+      (field) => !listingDetails?.[field]
     );
 
     if (missingFields.length > 0) {
-      alert(
-        `Please fill in the following required fields: ${missingFields.join(
-          ", "
-        )}`
-      );
+      alert(`Please fill: ${missingFields.join(", ")}`);
       return;
     }
+
     const token = localStorage.getItem("token");
     if (!token) {
-      console.log("Token Is Not Present");
+      alert("Authentication token missing");
       return;
     }
 
     try {
-      const response = await axios.put(
+      const res = await axios.put(
         `${import.meta.env.VITE_BASE_URL}/artist/update/${listingDetails._id}`,
-        {
-          listingDetails,
-        },
+        listingDetails,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -60,13 +94,12 @@ const ArtEditForm = ({ initialArt = {}, onSubmit }) => {
         }
       );
 
-      if (response.status == 200) {
-        const data = response.data;
+      if (res.status === 200) {
         navigate("/art-details");
-        // setListingDetails(data.)
       }
     } catch (err) {
-      console.log(err);
+      console.error("Update Error:", err);
+      alert("Failed to update art piece");
     }
   };
 
@@ -75,84 +108,68 @@ const ArtEditForm = ({ initialArt = {}, onSubmit }) => {
       <h2 className="text-2xl font-bold mb-6 text-center">Edit Art Piece</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Title Input */}
+        {/* TITLE */}
         <div>
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Title
-          </label>
+          <label className="block text-sm font-medium mb-1">Title</label>
           <input
             type="text"
-            id="title"
             name="title"
-            value={listingDetails.title}
+            value={listingDetails.title || ""}
             onChange={handleChange}
-            placeholder="Enter artwork title"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#111827] focus:border-[#111827]"
+            className="w-full px-3 py-2 border rounded-md"
           />
         </div>
 
-        {/* Description Input */}
+        {/* DESCRIPTION */}
         <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Description
-          </label>
+          <label className="block text-sm font-medium mb-1">Description</label>
           <textarea
-            id="description"
             name="description"
-            value={listingDetails.description}
+            value={listingDetails.description || ""}
             onChange={handleChange}
-            placeholder="Describe the artwork"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#111827] focus:border-[#111827] min-h-[100px]"
+            className="w-full px-3 py-2 border rounded-md min-h-[100px]"
           />
         </div>
 
-        {/* Image URL Input */}
+        {/* IMAGE UPLOAD */}
         <div>
-          <label
-            htmlFor="image"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Image URL
-          </label>
+          <label className="block text-sm font-medium mb-1">Upload Image</label>
           <input
-            type="url"
-            id="image"
-            name="image"
-            value={listingDetails.image}
-            onChange={handleChange}
-            placeholder="Enter image URL"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#111827] focus:border-[#111827]"
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full"
           />
+
+          <button
+            type="button"
+            onClick={handleImageAsFile}
+            disabled={loading || !file}
+            className="mt-3 px-4 py-1 border rounded"
+          >
+            {loading ? "Uploading..." : "Upload"}
+          </button>
+
           {listingDetails.image && (
-            <div className="mt-2">
-              <img
-                src={listingDetails.image}
-                alt="Preview"
-                className="w-full h-48 object-cover rounded-md"
-              />
-            </div>
+            <img
+              src={listingDetails.image}
+              alt="Preview"
+              className="mt-3 w-full h-48 object-cover rounded"
+            />
           )}
         </div>
 
-        {/* Art Type Select */}
+        {/* ART TYPE */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Type of Art
-          </label>
+          <label className="block text-sm font-medium mb-1">Type of Art</label>
           <select
             name="typeOfArt"
-            value={listingDetails.typeOfArt}
+            value={listingDetails.typeOfArt || ""}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#111827] focus:border-[#111827]"
+            className="w-full px-3 py-2 border rounded-md"
           >
             <option value="">Select art type</option>
             {artTypes.map((type) => (
@@ -163,53 +180,37 @@ const ArtEditForm = ({ initialArt = {}, onSubmit }) => {
           </select>
         </div>
 
-        {/* Location Input */}
+        {/* LOCATION */}
         <div>
-          <label
-            htmlFor="location"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Location
-          </label>
+          <label className="block text-sm font-medium mb-1">Location</label>
           <input
             type="text"
-            id="location"
             name="location"
-            value={listingDetails.location}
+            value={listingDetails.location || ""}
             onChange={handleChange}
-            placeholder="Enter artwork location"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#111827] focus:border-[#111827]"
+            className="w-full px-3 py-2 border rounded-md"
           />
         </div>
 
-        {/* Country Input */}
+        {/* COUNTRY */}
         <div>
-          <label
-            htmlFor="country"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Country
-          </label>
+          <label className="block text-sm font-medium mb-1">Country</label>
           <input
             type="text"
-            id="country"
             name="country"
-            value={listingDetails.country}
+            value={listingDetails.country || ""}
             onChange={handleChange}
-            placeholder="Enter country"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:[#111827] focus:border-[#111827]"
+            className="w-full px-3 py-2 border rounded-md"
           />
         </div>
 
-        {/* Submit Button */}
-        <div className="pt-4">
-          <button
-            type="submit"
-            className="w-full py-2 px-4 rounded-md bg-[#111827] text-white"
-          >
-            Save Art Piece
-          </button>
-        </div>
+        {/* SUBMIT */}
+        <button
+          type="submit"
+          className="w-full py-2 bg-[#111827] text-white rounded-md"
+        >
+          Save Art Piece
+        </button>
       </form>
     </div>
   );

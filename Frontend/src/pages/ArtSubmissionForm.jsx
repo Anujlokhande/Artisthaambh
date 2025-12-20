@@ -13,6 +13,10 @@ const ArtSubmissionForm = () => {
     price: "",
   });
 
+  const [imageUrl, setImageUrl] = useState("");
+  const [file, setFile] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -53,10 +57,32 @@ const ArtSubmissionForm = () => {
       if (responce.status == 200) {
         const data = responce.data;
         navigate("/home");
-        console.log("Form Submitted:", formData);
       }
     } catch (err) {
       console.log(err);
+    }
+  };
+
+  const handleImageAsFile = async (e) => {
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
+    if (!file) return;
+    setLoading(true);
+    const data = new FormData();
+    data.append("file", file);
+    const res = await axios.post(
+      `${import.meta.env.VITE_BASE_URL}/artist/upload`,
+      data
+    );
+
+    setLoading(false);
+    if (res.data?.url) {
+      setImageUrl(res.data.url);
+      setFormData((prev) => ({
+        ...prev,
+        image: res.data.url, // VERY IMPORTANT
+      }));
+    } else {
+      alert("Upload failed");
     }
   };
 
@@ -111,15 +137,31 @@ const ArtSubmissionForm = () => {
             Image URL *
           </label>
           <input
-            type="url"
-            id="image"
-            name="image"
-            value={formData.image}
-            onChange={handleChange}
-            placeholder="Enter image URL"
+            type="file"
+            id="file"
+            name="file"
+            onChange={(e) => {
+              setFile(e.target.files?.[0] ?? null);
+            }}
+            placeholder="Enter Image"
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <button
+            className="border border-gray-500 rounded w-30 px-3 py-1 mt-3"
+            type="button"
+            onClick={handleImageAsFile}
+            disabled={loading || !file}
+          >
+            {loading ? "Uploading..." : "Upload"}
+          </button>
+          {imageUrl && (
+            <img
+              src={imageUrl}
+              alt="Preview"
+              className="mt-3 w-full h-48 object-cover rounded"
+            />
+          )}
         </div>
 
         <div>
