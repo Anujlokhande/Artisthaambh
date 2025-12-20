@@ -22,7 +22,6 @@ const UserLogIn = () => {
         `${import.meta.env.VITE_BASE_URL}/user/login`,
         user
       );
-      console.log(responce.status);
       if (responce.status == 200) {
         const data = responce.data;
         setUser(data.user);

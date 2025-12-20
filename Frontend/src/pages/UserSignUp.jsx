@@ -24,8 +24,6 @@ const UserSignUp = () => {
       password: password,
     };
     try {
-      console.log(newUser);
-
       const responce = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/user/register`,
         newUser

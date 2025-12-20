@@ -28,8 +28,6 @@ const ArtistSignUp = () => {
       phone: number,
     };
 
-    console.log(newArtist);
-
     try {
       const responce = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/artist/register`,
