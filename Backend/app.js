@@ -9,7 +9,12 @@ const cookieParser = require("cookie-parser");
 const userRoute = require("./routes/user.routes");
 const artistRoute = require("./routes/artist.routes");
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://artisthaambh.vercel.app",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
