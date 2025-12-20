@@ -5,6 +5,9 @@ const ArtistProfile = () => {
   const location = useLocation();
   const { artist } = location.state || {};
   const navigate = useNavigate();
+  const back = () => {
+    navigate("/art-details");
+  };
   return (
     <div className="flex justify-center items-center h-screen bg-gray-200">
       <div className="flex flex-col items-center max-w-sm w-full bg-white rounded-2xl p-6 shadow-lg relative">
@@ -12,7 +15,7 @@ const ArtistProfile = () => {
           <i
             className="ri-close-line text-2xl pr-2 pt-2"
             onClick={() => {
-              navigate("/art-details");
+              back();
             }}
           ></i>
         </div>
@@ -33,28 +36,16 @@ const ArtistProfile = () => {
         </div>
 
         <div className="flex space-x-3 mt-4">
-          <a
-            href="#"
-            className="flex justify-center items-center w-10 h-10 rounded-full bg-blue-600 text-white text-xl"
-          >
+          <a className="flex justify-center items-center w-10 h-10 rounded-full bg-blue-600 text-white text-xl">
             <i className="ri-facebook-fill"></i>
           </a>
-          <a
-            href="#"
-            className="flex justify-center items-center w-10 h-10 rounded-full bg-sky-500 text-white text-xl"
-          >
+          <a className="flex justify-center items-center w-10 h-10 rounded-full bg-sky-500 text-white text-xl">
             <i className="ri-twitter-fill"></i>
           </a>
-          <a
-            href="#"
-            className="flex justify-center items-center w-10 h-10 rounded-full bg-pink-500 text-white text-xl"
-          >
+          <a className="flex justify-center items-center w-10 h-10 rounded-full bg-pink-500 text-white text-xl">
             <i className="ri-instagram-fill"></i>
           </a>
-          <a
-            href="#"
-            className="flex justify-center items-center w-10 h-10 rounded-full bg-red-600 text-white text-xl"
-          >
+          <a className="flex justify-center items-center w-10 h-10 rounded-full bg-red-600 text-white text-xl">
             <i className="ri-youtube-fill"></i>
           </a>
         </div>

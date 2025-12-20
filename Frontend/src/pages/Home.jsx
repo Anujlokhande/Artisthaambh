@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from "react";
 import NavBar from "./NavBar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import ArtListing from "./ArtListing";
 import { ListingDataContext } from "../context/ListingContext";
 import { ArtistDataContext } from "../context/AristContext";
 
@@ -67,7 +66,7 @@ const Home = () => {
         </div>
 
         <footer className="py-8 text-center text-gray-600">
-          <p>© 2024 ArtistHaan. All rights reserved.</p>
+          <p>© 2025 ArtiStambh. All rights reserved.</p>
         </footer>
       </div>
     </>
