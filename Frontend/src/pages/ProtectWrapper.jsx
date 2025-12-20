@@ -5,42 +5,52 @@ import { ArtistDataContext } from "../context/AristContext";
 import axios from "axios";
 
 const UserProtectWrapper = ({ children }) => {
+  const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  // console.log(token);
 
   const { user, setUser } = useContext(UserDataContext);
   const { artist, setArtist } = useContext(ArtistDataContext);
-  const navigate = useNavigate();
+
   useEffect(() => {
     if (!token) {
-      console.log("Token Is Not Present");
       navigate("/login");
+      return;
     }
 
-    try {
-      axios
-        .get(`${import.meta.env.VITE_BASE_URL}/artist/loggedIn`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((responce) => {
-          if (responce.status == 200) {
-            const data = responce.data;
-            // console.log(responce.data);
-
-            if (data.role == "user") {
-              setUser(data.user);
-            } else {
-              setArtist(data.artist);
-            }
-            navigate("/home");
+    async function checkLogin() {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/artist/loggedIn`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
-    } catch (err) {
-      console.log("err in protect wrapper", err);
+        );
+
+        if (response.status === 200) {
+          const data = response.data;
+
+          if (data.role === "user") {
+            setUser(data.user);
+            setArtist(null);
+          } else if (data.role === "artist") {
+            setArtist(data.artist);
+            setUser(null);
+          }
+        }
+      } catch (err) {
+        console.error("Auth failed:", err.response?.status);
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     }
-  }, [setUser, navigate]);
+
+    if (!user && !artist) {
+      checkLogin();
+    }
+  }, [token, user, artist, navigate, setUser, setArtist]);
+
   return <>{children}</>;
 };
 

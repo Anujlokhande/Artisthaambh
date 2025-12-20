@@ -7,6 +7,7 @@ const cloudinary = require("../config/cloudinary.js");
 const listingModel = require("../models/listing.model");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
+const userModel = require("../models/user.model.js");
 
 module.exports.registerArtist = async (req, res, next) => {
   const error = validationResult(req);
