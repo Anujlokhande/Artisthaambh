@@ -110,7 +110,7 @@ router.get("/loggedIn", async (req, res) => {
   }
 });
 
-router.get("/artOwner/:id", auth.artOwner);
+router.get("/artOwner/:id", auth.authArtist, auth.artOwner);
 
 //map
 
