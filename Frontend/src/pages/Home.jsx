@@ -30,7 +30,9 @@ const Home = () => {
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/artist/show");
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/artist/show`
+        );
 
         setListing(response.data);
       } catch (error) {
