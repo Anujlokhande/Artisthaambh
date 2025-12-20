@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const data = require("./sample.js");
 const Listing = require("../models/listing.model.js");
 async function main() {
-  await mongoose.connect("mongodb://127.0.0.1:27017/artisthaan");
+  await mongoose.connect(`${process.env.DB_URL}`);
 }
 
 main()

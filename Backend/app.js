@@ -35,7 +35,7 @@ app.listen(port, () => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Welcome To Artisthaan");
+  res.send("Welcome");
 });
 
 app.use("/user", userRoute);
