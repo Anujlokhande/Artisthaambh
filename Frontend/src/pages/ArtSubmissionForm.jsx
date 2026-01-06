@@ -14,34 +14,43 @@ const ArtSubmissionForm = () => {
   });
 
   const [imageUrl, setImageUrl] = useState("");
-  const [file, setFile] = useState("");
+  const [file, setFile] = useState(null);
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!formData.title.trim()) newErrors.title = "Title is required";
+    if (!formData.description.trim())
+      newErrors.description = "Description is required";
+    if (!formData.typeOfArt) newErrors.typeOfArt = "Type of art is required";
+    if (!formData.image) newErrors.image = "Image upload is required";
+
+    if (formData.price && isNaN(formData.price)) {
+      newErrors.price = "Price must be a number";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Validate required fields
-    if (!formData.title || !formData.description || !formData.typeOfArt) {
-      alert("Please fill in all required fields");
-      return;
-    }
+    if (!validate()) return;
 
     const token = localStorage.getItem("token");
-    if (!token) {
-      console.log("Token Is Not Present");
-      return;
-    }
+    if (!token) return;
 
-    // console.log(formData);
+    setLoading(true);
 
     try {
       const responce = await axios.post(
@@ -54,107 +63,96 @@ const ArtSubmissionForm = () => {
         }
       );
 
-      if (responce.status == 200) {
-        const data = responce.data;
+      if (responce.status === 200) {
         navigate("/home");
       }
     } catch (err) {
       console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleImageAsFile = async (e) => {
     if (e && typeof e.preventDefault === "function") e.preventDefault();
     if (!file) return;
-    setLoading(true);
-    const data = new FormData();
-    data.append("file", file);
-    const res = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/artist/upload`,
-      data
-    );
 
-    setLoading(false);
-    if (res.data?.url) {
-      setImageUrl(res.data.url);
-      setFormData((prev) => ({
-        ...prev,
-        image: res.data.url, // VERY IMPORTANT
-      }));
-    } else {
-      alert("Upload failed");
+    setUploading(true);
+
+    try {
+      const data = new FormData();
+      data.append("file", file);
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/artist/upload`,
+        data
+      );
+
+      if (res.data?.url) {
+        setImageUrl(res.data.url);
+        setFormData((prev) => ({ ...prev, image: res.data.url }));
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-lg ">
+    <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-lg">
       <h2 className="text-2xl font-bold mb-6 text-center">
         Art Submission Form
       </h2>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Title *
-          </label>
+          <label className="block text-sm font-medium mb-1">Title *</label>
           <input
             type="text"
-            id="title"
             name="title"
             value={formData.title}
             onChange={handleChange}
-            placeholder="Enter artwork title"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-md"
           />
+          {errors.title && (
+            <p className="text-red-500 text-sm">{errors.title}</p>
+          )}
         </div>
 
         <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+          <label className="block text-sm font-medium mb-1">
             Description *
           </label>
           <textarea
-            id="description"
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Describe your artwork"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-md min-h-[100px]"
           />
+          {errors.description && (
+            <p className="text-red-500 text-sm">{errors.description}</p>
+          )}
         </div>
 
         <div>
-          <label
-            htmlFor="image"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Image URL *
-          </label>
+          <label className="block text-sm font-medium mb-1">Image *</label>
           <input
             type="file"
-            id="file"
-            name="file"
-            onChange={(e) => {
-              setFile(e.target.files?.[0] ?? null);
-            }}
-            placeholder="Enter Image"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="w-full px-3 py-2 border rounded-md"
           />
           <button
-            className="border border-gray-500 rounded w-30 px-3 py-1 mt-3"
             type="button"
             onClick={handleImageAsFile}
-            disabled={loading || !file}
+            disabled={uploading || !file}
+            className="border border-gray-500 rounded px-3 py-1 mt-3"
           >
-            {loading ? "Uploading..." : "Upload"}
+            {uploading ? "Uploading..." : "Upload"}
           </button>
+          {errors.image && (
+            <p className="text-red-500 text-sm">{errors.image}</p>
+          )}
           {imageUrl && (
             <img
               src={imageUrl}
@@ -165,19 +163,14 @@ const ArtSubmissionForm = () => {
         </div>
 
         <div>
-          <label
-            htmlFor="typeOfArt"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+          <label className="block text-sm font-medium mb-1">
             Type of Art *
           </label>
           <select
-            id="typeOfArt"
             name="typeOfArt"
             value={formData.typeOfArt}
             onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-md"
           >
             <option value="">Select art type</option>
             <option value="Chittara art">Chittara art</option>
@@ -187,69 +180,54 @@ const ArtSubmissionForm = () => {
             <option value="Mixed Media">Mixed Media</option>
             <option value="Other">Other</option>
           </select>
+          {errors.typeOfArt && (
+            <p className="text-red-500 text-sm">{errors.typeOfArt}</p>
+          )}
         </div>
 
         <div>
-          <label
-            htmlFor="price"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Price
-          </label>
+          <label className="block text-sm font-medium mb-1">Price</label>
           <input
             type="text"
-            id="price"
             name="price"
             value={formData.price}
             onChange={handleChange}
-            placeholder="Enter country"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-md"
           />
+          {errors.price && (
+            <p className="text-red-500 text-sm">{errors.price}</p>
+          )}
         </div>
 
-        <div className="flex  justify-center items-center gap-2">
-          <div>
-            <label
-              htmlFor="location"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Location
-            </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="Enter artwork location"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="country"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Country
-            </label>
-            <input
-              type="text"
-              id="country"
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              placeholder="Enter country"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            placeholder="Location"
+            className="w-full px-3 py-2 border rounded-md"
+          />
+          <input
+            type="text"
+            name="country"
+            value={formData.country}
+            onChange={handleChange}
+            placeholder="Country"
+            className="w-full px-3 py-2 border rounded-md"
+          />
         </div>
 
         <button
           type="submit"
-          className="w-full py-2 px-4 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 mt-4"
+          disabled={loading}
+          className={`w-full py-2 font-semibold rounded-md text-white mt-4 ${
+            loading
+              ? "bg-green-600/70 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-700"
+          }`}
         >
-          Submit Artwork
+          {loading ? "Submitting..." : "Submit Artwork"}
         </button>
       </form>
     </div>

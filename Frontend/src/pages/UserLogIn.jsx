@@ -7,6 +7,8 @@ const UserLogIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
   const { setUser } = useContext(UserDataContext);
   const navigate = useNavigate();
 
@@ -33,6 +35,8 @@ const UserLogIn = () => {
     e.preventDefault();
     if (!validate()) return;
 
+    setLoading(true);
+
     try {
       const responce = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/user/login`,
@@ -47,6 +51,8 @@ const UserLogIn = () => {
       }
     } catch (err) {
       setErrors({ api: "Invalid email or password" });
+    } finally {
+      setLoading(false);
     }
 
     setPassword("");
@@ -97,13 +103,20 @@ const UserLogIn = () => {
               </p>
             )}
 
-            <button className="w-full border-2 border-[#8E7B61] rounded-md text-white flex justify-center items-center bg-[#A27B4E] py-1.5 px-5 mb-5 mt-2">
-              Log In
+            <button
+              disabled={loading}
+              className={`w-full border-2 border-[#8E7B61] rounded-md text-white flex justify-center items-center py-1.5 px-5 mb-5 mt-2 ${
+                loading ? "bg-[#A27B4E]/70 cursor-not-allowed" : "bg-[#A27B4E]"
+              }`}
+            >
+              {loading ? "Logging In..." : "Log In"}
             </button>
 
             <Link
               to="/artist-login"
-              className="w-full border-2 border-black rounded-md text-white bg-black py-1.5 px-5 flex justify-center items-center"
+              className={`w-full border-2 border-black rounded-md text-white py-1.5 px-5 flex justify-center items-center ${
+                loading ? "bg-black/70 pointer-events-none" : "bg-black"
+              }`}
             >
               Log In As Artist
             </Link>

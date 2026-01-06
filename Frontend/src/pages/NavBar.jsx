@@ -106,33 +106,15 @@ const NavBar = ({ setSelectedCategory }) => {
 
       {/* Categories - Only for users */}
       <AnimatePresence>
-        {user && (
-          <div className="flex items-center gap-4 overflow-x-auto px-4 scrollbar-hide">
-            {categories.map((category) => (
-              <CategoryButton
-                key={category}
-                category={category}
-                onClick={() => setSelectedCategory(category)}
-              />
-            ))}
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Artist Dashboard - Only for artists */}
-      <AnimatePresence>
-        {artist && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-4 bg-[#E60023] text-white px-4 py-2 rounded-lg"
-          >
-            <i className="ri-palette-line" />
-            <span className="font-semibold">Artist Dashboard</span>
-          </motion.div>
-        )}
+        <div className="flex items-center gap-4 overflow-x-auto px-4 scrollbar-hide">
+          {categories.map((category) => (
+            <CategoryButton
+              key={category}
+              category={category}
+              onClick={() => setSelectedCategory(category)}
+            />
+          ))}
+        </div>
       </AnimatePresence>
 
       {/* Navigation Menu */}

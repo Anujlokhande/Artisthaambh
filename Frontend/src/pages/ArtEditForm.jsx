@@ -10,6 +10,8 @@ const ArtEditForm = () => {
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const artTypes = [
     "Chittara art",
@@ -22,10 +24,21 @@ const ArtEditForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setListingDetails((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setListingDetails((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!listingDetails?.title?.trim()) newErrors.title = "Title is required";
+    if (!listingDetails?.description?.trim())
+      newErrors.description = "Description is required";
+    if (!listingDetails?.typeOfArt)
+      newErrors.typeOfArt = "Type of art is required";
+    if (!listingDetails?.image) newErrors.image = "Image is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleImageAsFile = async (e) => {
@@ -36,15 +49,13 @@ const ArtEditForm = () => {
 
     try {
       const formData = new FormData();
-      formData.append("file", file); // must match backend
+      formData.append("file", file);
 
       const res = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/artist/upload`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
 
@@ -53,12 +64,9 @@ const ArtEditForm = () => {
           ...prev,
           image: res.data.url,
         }));
-      } else {
-        alert("Image upload failed");
       }
     } catch (err) {
-      console.error("Upload Error:", err);
-      alert("Image upload failed");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -66,31 +74,19 @@ const ArtEditForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const requiredFields = ["title", "description", "typeOfArt", "image"];
-    const missingFields = requiredFields.filter(
-      (field) => !listingDetails?.[field]
-    );
-
-    if (missingFields.length > 0) {
-      alert(`Please fill: ${missingFields.join(", ")}`);
-      return;
-    }
+    if (!validate()) return;
 
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Authentication token missing");
-      return;
-    }
+    if (!token) return;
+
+    setSaving(true);
 
     try {
       const res = await axios.put(
         `${import.meta.env.VITE_BASE_URL}/artist/update/${listingDetails._id}`,
         listingDetails,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -98,8 +94,9 @@ const ArtEditForm = () => {
         navigate("/art-details");
       }
     } catch (err) {
-      console.error("Update Error:", err);
-      alert("Failed to update art piece");
+      console.error(err);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -108,7 +105,6 @@ const ArtEditForm = () => {
       <h2 className="text-2xl font-bold mb-6 text-center">Edit Art Piece</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* TITLE */}
         <div>
           <label className="block text-sm font-medium mb-1">Title</label>
           <input
@@ -116,24 +112,26 @@ const ArtEditForm = () => {
             name="title"
             value={listingDetails.title || ""}
             onChange={handleChange}
-            required
             className="w-full px-3 py-2 border rounded-md"
           />
+          {errors.title && (
+            <p className="text-red-500 text-sm">{errors.title}</p>
+          )}
         </div>
 
-        {/* DESCRIPTION */}
         <div>
           <label className="block text-sm font-medium mb-1">Description</label>
           <textarea
             name="description"
             value={listingDetails.description || ""}
             onChange={handleChange}
-            required
             className="w-full px-3 py-2 border rounded-md min-h-[100px]"
           />
+          {errors.description && (
+            <p className="text-red-500 text-sm">{errors.description}</p>
+          )}
         </div>
 
-        {/* IMAGE UPLOAD */}
         <div>
           <label className="block text-sm font-medium mb-1">Upload Image</label>
           <input
@@ -142,7 +140,6 @@ const ArtEditForm = () => {
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="w-full"
           />
-
           <button
             type="button"
             onClick={handleImageAsFile}
@@ -151,7 +148,9 @@ const ArtEditForm = () => {
           >
             {loading ? "Uploading..." : "Upload"}
           </button>
-
+          {errors.image && (
+            <p className="text-red-500 text-sm">{errors.image}</p>
+          )}
           {listingDetails.image && (
             <img
               src={listingDetails.image}
@@ -161,14 +160,12 @@ const ArtEditForm = () => {
           )}
         </div>
 
-        {/* ART TYPE */}
         <div>
           <label className="block text-sm font-medium mb-1">Type of Art</label>
           <select
             name="typeOfArt"
             value={listingDetails.typeOfArt || ""}
             onChange={handleChange}
-            required
             className="w-full px-3 py-2 border rounded-md"
           >
             <option value="">Select art type</option>
@@ -178,9 +175,11 @@ const ArtEditForm = () => {
               </option>
             ))}
           </select>
+          {errors.typeOfArt && (
+            <p className="text-red-500 text-sm">{errors.typeOfArt}</p>
+          )}
         </div>
 
-        {/* LOCATION */}
         <div>
           <label className="block text-sm font-medium mb-1">Location</label>
           <input
@@ -192,7 +191,6 @@ const ArtEditForm = () => {
           />
         </div>
 
-        {/* COUNTRY */}
         <div>
           <label className="block text-sm font-medium mb-1">Country</label>
           <input
@@ -204,12 +202,14 @@ const ArtEditForm = () => {
           />
         </div>
 
-        {/* SUBMIT */}
         <button
           type="submit"
-          className="w-full py-2 bg-[#111827] text-white rounded-md"
+          disabled={saving}
+          className={`w-full py-2 text-white rounded-md ${
+            saving ? "bg-[#111827]/70 cursor-not-allowed" : "bg-[#111827]"
+          }`}
         >
-          Save Art Piece
+          {saving ? "Saving..." : "Save Art Piece"}
         </button>
       </form>
     </div>

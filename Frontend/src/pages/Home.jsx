@@ -7,7 +7,8 @@ import { ArtistDataContext } from "../context/AristContext";
 
 const Home = () => {
   const [listing, setListing] = useState([]);
-  const { listingDetails, setListingDetails } = useContext(ListingDataContext);
+  const [loading, setLoading] = useState(true);
+  const { setListingDetails } = useContext(ListingDataContext);
   const [selectedCategory, setSelectedCategory] = useState("");
   const { artist } = useContext(ArtistDataContext);
 
@@ -18,7 +19,7 @@ const Home = () => {
       const responce = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/artist/show/${id}`
       );
-      if (responce.status == 200) {
+      if (responce.status === 200) {
         setListingDetails(responce.data);
         navigate("/art-details");
       }
@@ -33,10 +34,11 @@ const Home = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/artist/show`
         );
-
         setListing(response.data);
       } catch (error) {
         console.error("Error fetching artists:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -44,14 +46,23 @@ const Home = () => {
   }, []);
 
   return (
-    <>
-      <div>
-        <div className="h-[10vh] w-full flex items-center justify-between px-6">
-          <NavBar setSelectedCategory={setSelectedCategory} />
-        </div>
+    <div>
+      <div className="h-[10vh] w-full flex items-center justify-between px-6">
+        <NavBar setSelectedCategory={setSelectedCategory} />
+      </div>
 
-        <div>
-          <div className="columns-1 sm:columns-2 md:columns-4 gap-4 p-4 space-y-4 ">
+      <div className="p-4">
+        {loading ? (
+          <div className="columns-1 sm:columns-2 md:columns-4 gap-4 space-y-4">
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="w-full h-64 bg-gray-200 rounded-lg animate-pulse break-inside-avoid"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="columns-1 sm:columns-2 md:columns-4 gap-4 space-y-4">
             {listing
               .filter((item) =>
                 selectedCategory ? item.typeOfArt === selectedCategory : true
@@ -61,17 +72,17 @@ const Home = () => {
                   onClick={() => getDetail(item._id)}
                   key={item._id}
                   src={item.image}
-                  className="w-full object-cover rounded-lg break-inside-avoid hover:cursor-pointer"
+                  className="w-full object-cover rounded-lg break-inside-avoid hover:cursor-pointer transition-transform duration-300 hover:scale-[1.02]"
                 />
               ))}
           </div>
-        </div>
-
-        <footer className="py-8 text-center text-gray-600">
-          <p>© 2025 ArtiStambh. All rights reserved.</p>
-        </footer>
+        )}
       </div>
-    </>
+
+      <footer className="py-8 text-center text-gray-600">
+        <p>© 2025 ArtiStambh. All rights reserved.</p>
+      </footer>
+    </div>
   );
 };
 

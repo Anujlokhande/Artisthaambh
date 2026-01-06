@@ -9,6 +9,7 @@ const UserSignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const { setUser } = useContext(UserDataContext);
   const navigate = useNavigate();
@@ -39,6 +40,8 @@ const UserSignUp = () => {
     e.preventDefault();
     if (!validate()) return;
 
+    setLoading(true);
+
     const newUser = {
       fullname: {
         firstname: firstName,
@@ -62,6 +65,8 @@ const UserSignUp = () => {
       }
     } catch (err) {
       setErrors({ api: "Registration failed. Try again." });
+    } finally {
+      setLoading(false);
     }
 
     setPassword("");
@@ -146,13 +151,20 @@ const UserSignUp = () => {
               </p>
             )}
 
-            <button className="w-full border-2 border-[#8E7B61] rounded-md text-white flex justify-center items-center bg-[#A27B4E] py-1.5 px-5 mb-5 mt-2">
-              Sign Up
+            <button
+              disabled={loading}
+              className={`w-full border-2 border-[#8E7B61] rounded-md text-white flex justify-center items-center py-1.5 px-5 mb-5 mt-2 ${
+                loading ? "bg-[#A27B4E]/70 cursor-not-allowed" : "bg-[#A27B4E]"
+              }`}
+            >
+              {loading ? "Signing Up..." : "Sign Up"}
             </button>
 
             <Link
               to="/artist-signup"
-              className="w-full border-2 border-black rounded-md text-white bg-black py-1.5 px-5 flex justify-center items-center"
+              className={`w-full border-2 border-black rounded-md text-white py-1.5 px-5 flex justify-center items-center ${
+                loading ? "bg-black/70 pointer-events-none" : "bg-black"
+              }`}
             >
               Register As Artist
             </Link>

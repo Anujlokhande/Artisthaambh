@@ -32,6 +32,12 @@ module.exports.registerArtist = async (req, res, next) => {
       profilePic: profilePic || undefined,
       city,
     });
+    if (!artist) {
+      return res
+        .status(400)
+        .json({ message: "email or number may be duplicate" });
+    }
+
     req.artist = artist;
 
     const token = await artist.generateAuthToken();

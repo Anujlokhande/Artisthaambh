@@ -7,6 +7,7 @@ const ArtistLogIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const { setArtist } = useContext(ArtistDataContext);
   const navigate = useNavigate();
@@ -34,6 +35,8 @@ const ArtistLogIn = () => {
     e.preventDefault();
     if (!validate()) return;
 
+    setLoading(true);
+
     try {
       const responce = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/artist/login`,
@@ -48,6 +51,8 @@ const ArtistLogIn = () => {
       }
     } catch (err) {
       setErrors({ api: "Invalid email or password" });
+    } finally {
+      setLoading(false);
     }
 
     setPassword("");
@@ -81,7 +86,7 @@ const ArtistLogIn = () => {
             )}
 
             <h3 className="text-xl text-[#D4B894] font-medium mb-2">
-              Create Your Password
+              Enter Your Password
             </h3>
             <input
               value={password}
@@ -100,13 +105,20 @@ const ArtistLogIn = () => {
               </p>
             )}
 
-            <button className="w-full border-2 border-[#8E7B61] rounded-md text-white flex justify-center items-center bg-[#A27B4E] py-1.5 px-5 mb-5">
-              Log In
+            <button
+              disabled={loading}
+              className={`w-full border-2 border-[#8E7B61] rounded-md text-white flex justify-center items-center py-1.5 px-5 mb-5 ${
+                loading ? "bg-[#A27B4E]/70 cursor-not-allowed" : "bg-[#A27B4E]"
+              }`}
+            >
+              {loading ? "Logging In..." : "Log In"}
             </button>
 
             <Link
               to="/login"
-              className="w-full border-2 border-black rounded-md text-white bg-black py-1.5 px-5 flex justify-center items-center"
+              className={`w-full border-2 border-black rounded-md text-white py-1.5 px-5 flex justify-center items-center ${
+                loading ? "bg-black/70 pointer-events-none" : "bg-black"
+              }`}
             >
               Log In As User
             </Link>
@@ -114,7 +126,7 @@ const ArtistLogIn = () => {
 
           <p className="mt-3 text-center">
             Don't Have An Account{" "}
-            <Link to="/signup" className="underline">
+            <Link to="/artist-signup" className="underline">
               Register Here
             </Link>
           </p>
