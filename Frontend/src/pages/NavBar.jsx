@@ -68,6 +68,7 @@ const CategoryButton = ({ category, onClick, isActive }) => (
 
 const NavBar = ({ setSelectedCategory, selectedCategory }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const { user, setUser } = useContext(UserDataContext);
   const { artist, setArtist } = useContext(ArtistDataContext);
@@ -110,10 +111,10 @@ const NavBar = ({ setSelectedCategory, selectedCategory }) => {
           navigate("/home");
         }}
       >
-        <span className="ml-4 text-3xl sm:hidden">artistambh</span>
+        <span className="ml-4 text-3xl ">artistambh</span>
       </motion.div>
 
-      <div className="flex items-center gap-4 overflow-x-auto px-4 scrollbar-hide">
+      <div className="hidden md:flex items-center gap-4 overflow-x-auto px-4 scrollbar-hide">
         {categories.map((category) => (
           <CategoryButton
             key={category}
@@ -160,6 +161,18 @@ const NavBar = ({ setSelectedCategory, selectedCategory }) => {
             className="ri-arrow-down-s-line"
           />
         </motion.div>
+
+        <button
+          aria-label="Toggle mobile menu"
+          className="md:hidden p-2 rounded-md bg-white hover:bg-gray-100"
+          onClick={() => setMobileOpen((p) => !p)}
+        >
+          <i
+            className={
+              mobileOpen ? "ri-close-line text-2xl" : "ri-menu-line text-2xl"
+            }
+          />
+        </button>
 
         <AnimatePresence>
           {menuOpen && (
@@ -225,6 +238,106 @@ const NavBar = ({ setSelectedCategory, selectedCategory }) => {
           )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            variants={menuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="absolute top-full left-0 w-full bg-white shadow-md z-40 md:hidden"
+          >
+            <div className="px-4 py-3 border-b flex flex-col gap-2">
+              {categories.map((category) => (
+                <CategoryButton
+                  key={category + "-mobile"}
+                  category={category}
+                  isActive={selectedCategory === category}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    setMobileOpen(false);
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="px-2 py-3">
+              <div className="px-4 py-3 border-b bg-gray-50">
+                <p className="font-medium text-gray-800">
+                  {artist ? "Artist Account" : "User Account"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {artist ? artist.email : user?.email}
+                </p>
+              </div>
+
+              <div className="flex flex-col">
+                {artist && (
+                  <>
+                    <MenuItem
+                      icon="ri-add-box-line"
+                      label="Create Artwork"
+                      onClick={() => {
+                        navigate("/art-submission");
+                        setMobileOpen(false);
+                      }}
+                    />
+                    <MenuItem
+                      icon="ri-gallery-line"
+                      label="My Artworks"
+                      onClick={() => {
+                        navigate("/artist-art");
+                        setMobileOpen(false);
+                      }}
+                    />
+                  </>
+                )}
+
+                {user && (
+                  <MenuItem
+                    icon="ri-bookmark-line"
+                    label="Saved Artworks"
+                    onClick={() => {
+                      navigate("/saved");
+                      setMobileOpen(false);
+                    }}
+                  />
+                )}
+
+                <MenuItem
+                  icon="ri-information-line"
+                  label="About Us"
+                  onClick={() => {
+                    navigate("/about");
+                    setMobileOpen(false);
+                  }}
+                />
+                <MenuItem
+                  icon="ri-customer-service-line"
+                  label="Help Centre"
+                  onClick={() => {
+                    navigate("/help");
+                    setMobileOpen(false);
+                  }}
+                />
+
+                <hr className="my-2" />
+
+                <MenuItem
+                  icon="ri-logout-box-line"
+                  label="Log out"
+                  onClick={() => {
+                    handleLogout();
+                    setMobileOpen(false);
+                  }}
+                  color="red-600"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 };
