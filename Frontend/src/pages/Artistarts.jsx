@@ -16,8 +16,7 @@ const Artistarts = () => {
       const responce = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/artist/show/${id}`
       );
-      if (responce.status == 200) {
-        // console.log(responce.data);
+      if (responce.status === 200) {
         setListingDetails(responce.data);
         navigate("/art-details");
       }
@@ -26,17 +25,27 @@ const Artistarts = () => {
     }
   };
 
+  const filteredArts =
+    artist?.arts?.filter((item) =>
+      selectedCategory ? item.typeOfArt === selectedCategory : true
+    ) || [];
+
   return (
     <div>
       <div className="h-[10vh] w-full flex items-center justify-between px-6">
-        <NavBar setSelectedCategory={setSelectedCategory} />
+        <NavBar
+          setSelectedCategory={setSelectedCategory}
+          selectedCategory={selectedCategory}
+        />
       </div>
-      <div className="columns-1 sm:columns-2 md:columns-4 gap-4 p-4 space-y-4 ">
-        {artist.arts
-          .filter((item) =>
-            selectedCategory ? item.typeOfArt === selectedCategory : true
-          )
-          .map((item) => (
+
+      {filteredArts.length === 0 ? (
+        <div className="flex justify-center items-center h-[60vh] text-gray-500 text-lg">
+          You haven’t uploaded any artworks yet
+        </div>
+      ) : (
+        <div className="columns-1 sm:columns-2 md:columns-4 gap-4 p-4 space-y-4">
+          {filteredArts.map((item) => (
             <img
               onClick={() => getDetail(item._id)}
               key={item._id}
@@ -44,7 +53,8 @@ const Artistarts = () => {
               className="w-full object-cover rounded-lg break-inside-avoid hover:cursor-pointer"
             />
           ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
