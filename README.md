@@ -1,6 +1,6 @@
 # Artisthambh
 
-**Artisthambh** is a full-stack MERN application that connects artists and users through a centralized platform. It provides authentication for both artists and users, listings for artwork/services, and one-to-one chat conversations, making it a structured space for artistic collaboration.
+**Artisthambh** is a full-stack MERN application that connects artists and users through a centralized platform. It provides authentication for both artists and users, listings for artwork/services making it a structured space for artistic collaboration.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-success)](https://artisthaambh.vercel.app)
 [![GitHub](https://img.shields.io/badge/github-repository-blue)](https://github.com/Anujlokhande/Artisthaambh)
@@ -11,9 +11,7 @@
 
 - 🔐 **JWT-based authentication and authorization**
 - 👥 **Role-based access** (Artist/User)
-- 🎨 **Artist profile management**
 - 📝 **Artwork listings** (create, edit, delete, view)
-- 💬 **One-to-one chat model structure**
 - 🖼️ **Secure media uploads** using Cloudinary
 - 🔄 **RESTful API architecture** with Express.js
 - 🧩 **Modular MVC backend design**
@@ -81,15 +79,6 @@ Models reference each other using MongoDB ObjectIds to maintain relationships.
 | GET | `/api/listings/:id` | Get listing by ID |
 | PUT | `/api/listings/:id` | Update listing |
 | DELETE | `/api/listings/:id` | Delete listing |
-
-### Chat / Messages
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/chats` | Create chat session |
-| GET | `/api/chats/:userId` | Get user chats |
-| POST | `/api/messages` | Send message |
-| GET | `/api/messages/:chatId` | Get messages in chat |
 
 ---
 
